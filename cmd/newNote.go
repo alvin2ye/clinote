@@ -50,6 +50,13 @@ flag.`,
 			fmt.Println("Note title has to be given")
 			return
 		}
+		
+		file, err := cmd.Flags().GetString("file")
+		if err != nil {
+			fmt.Println("file", file)
+			fmt.Println("err", err)
+			return
+		}
 		notebook, err := cmd.Flags().GetString("notebook")
 		if err != nil {
 			fmt.Println("Error when parsing notebook name:", err)
@@ -60,19 +67,20 @@ flag.`,
 			fmt.Println("Error when parsing raw parameter:", err)
 			return
 		}
-		createNote(title, notebook, edit, raw)
+		createNote(title, notebook, edit, raw, file)
 	},
 }
 
 func init() {
 	noteCmd.AddCommand(newNoteCmd)
 	newNoteCmd.Flags().StringP("title", "t", "", "Note title.")
+	newNoteCmd.Flags().StringP("file", "f", "", "Textfile path")
 	newNoteCmd.Flags().StringP("notebook", "b", "", "The notebook to save note to, if not set the default notebook will be used.")
 	newNoteCmd.Flags().BoolP("edit", "e", false, "Open note in the editor.")
 	newNoteCmd.Flags().Bool("raw", false, "Edit the content in raw mode.")
 }
 
-func createNote(title, notebook string, edit, raw bool) {
+func createNote(title, notebook string, edit, raw bool, file string) {	
 	c := newClient(clinote.DefaultClientOptions)
 	defer c.Store.Close()
 
@@ -100,5 +108,6 @@ func createNote(title, notebook string, edit, raw bool) {
 		}
 		return
 	}
-	clinote.SaveNewNote(c.NoteStore, note, raw)
+	
+	clinote.SaveNewNote(c.NoteStore, note, raw, file)
 }

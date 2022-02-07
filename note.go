@@ -27,6 +27,8 @@ import (
 	"io"
 	"strconv"
 	"strings"
+	"os"
+	"io/ioutil"
 
 	"github.com/TcM1911/clinote/markdown"
 	uuid "github.com/satori/go.uuid"
@@ -243,12 +245,23 @@ func saveChanges(ns NotestoreClient, n *Note, updateContent, useRawContent bool)
 }
 
 // SaveNewNote pushes the new note to the server.
-func SaveNewNote(ns NotestoreClient, n *Note, raw bool) error {
+func SaveNewNote(ns NotestoreClient, n *Note, raw bool, file string) error {
 	var body string
 	if !raw && n.MD != "" {
 		body = toXML(n.MD)
 	} else if raw {
 		body = fmt.Sprintf("%s<en-note>%s</en-note>", XMLHeader, n.Body)
+	} else if file != "" {
+	    bodyTextFile, err := os.Open(file)
+		if err != nil {
+			return err
+		}
+		
+		bodyText, err := ioutil.ReadAll(bodyTextFile)
+		if err != nil {
+			return err
+		}
+		body = fmt.Sprintf("%s<en-note>%s</en-note>", XMLHeader, bodyText)
 	} else {
 		body = XMLHeader + "<en-note></en-note>"
 	}
@@ -326,7 +339,7 @@ func CreateAndEditNewNote(client *Client, note *Note, opts NoteOption) error {
 	if err != nil {
 		return err
 	}
-	return SaveNewNote(client.NoteStore, note, opts&RawNote != 0)
+	return SaveNewNote(client.NoteStore, note, opts&RawNote != 0, "")
 }
 
 func checkForNotebookAndUpdate(client *Client, note *Note, initialNotebook string) error {
